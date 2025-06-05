@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Feature Usage - Home360 Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Feature Usage Metrics (Meal Planning, Recipe Search)</h3>
+                </div>
+                <div class="card-body">
+                    {% if feature_data %}
+                        <h4>Completed Meal Planners</h4>
+                        <pre>{{ feature_data.completed_meal_planners | tojson(indent=4) }}</pre>
+
+                        <h4>Recipe Search Count</h4>
+                        <pre>{{ feature_data.recipe_search_count | tojson(indent=4) }}</pre>
+
+                        <h4>Added from Search Count</h4>
+                        <pre>{{ feature_data.add_from_search_count | tojson(indent=4) }}</pre>
+
+                        <h4>Add Own Recipe Counts (by source)</h4>
+                        <pre>{{ feature_data.add_own_recipe_counts | tojson(indent=4) }}</pre>
+
+                        <p class="mt-3"><em>Note: 'Need Help' feature data is not currently available.</em></p>
+                    {% else %}
+                        <p>No feature usage data available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

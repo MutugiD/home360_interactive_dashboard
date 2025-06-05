@@ -1,0 +1,435 @@
+{% extends "base.html" %}
+
+{% block title %}Drop-Off Analysis - Home360 Analytics{% endblock %}
+
+{% block header %}Drop-Off Analysis by Step (Funnel View){% endblock %}
+
+{% block content %}
+<!-- Summary Cards -->
+<div class="row">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h4 id="total-signups">
+                    {{ drop_off_data.signup_funnel.total_users[0].total_users if drop_off_data.signup_funnel.total_users else 0 }}
+                </h4>
+                <p>Total App Downloads</p>
+                <div class="progress" style="height: 4px;">
+                    <div class="progress-bar bg-white" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h4 id="logged-in-users">
+                    {{ drop_off_data.signup_funnel.logged_in[0].logged_in_users if drop_off_data.signup_funnel.logged_in else 0 }}
+                </h4>
+                <p>Logged In</p>
+                {% set total = drop_off_data.signup_funnel.total_users[0].total_users if drop_off_data.signup_funnel.total_users else 1 %}
+                {% set logged_in = drop_off_data.signup_funnel.logged_in[0].logged_in_users if drop_off_data.signup_funnel.logged_in else 0 %}
+                {% set login_rate = (logged_in / total * 100) if total > 0 else 0 %}
+                <div class="progress" style="height: 4px;">
+                    <div class="progress-bar bg-white" style="width: {{ login_rate }}%"></div>
+                </div>
+                <small>{{ "%.1f"|format(login_rate) }}% conversion</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <h4 id="with-home-users">
+                    {{ drop_off_data.signup_funnel.with_home[0].users_with_home if drop_off_data.signup_funnel.with_home else 0 }}
+                </h4>
+                <p>Joined/Created Home</p>
+                {% set with_home = drop_off_data.signup_funnel.with_home[0].users_with_home if drop_off_data.signup_funnel.with_home else 0 %}
+                {% set home_rate = (with_home / logged_in * 100) if logged_in > 0 else 0 %}
+                <div class="progress" style="height: 4px;">
+                    <div class="progress-bar bg-white" style="width: {{ home_rate }}%"></div>
+                </div>
+                <small>{{ "%.1f"|format(home_rate) }}% of logged in users</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <h4 id="task-completion-rate">
+                    {{ drop_off_data.task_completion[0].pct_completed_by_staff if drop_off_data.task_completion else 0 }}%
+                </h4>
+                <p>Task Completion Rate</p>
+                <div class="progress" style="height: 4px;">
+                    <div class="progress-bar bg-white" style="width: {{ drop_off_data.task_completion[0].pct_completed_by_staff if drop_off_data.task_completion else 0 }}%"></div>
+                </div>
+                <small>By staff members</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Funnel Visualization -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">User Journey Funnel (Click steps to filter)</h3>
+            </div>
+            <div class="card-body">
+                <div class="funnel-container">
+                    <div class="funnel-step" data-step="downloads" onclick="filterByStep('downloads')">
+                        <div class="step-content bg-primary">
+                            <h4>{{ drop_off_data.signup_funnel.total_users[0].total_users if drop_off_data.signup_funnel.total_users else 0 }}</h4>
+                            <p>App Downloads</p>
+                            <small>100% - Starting point</small>
+                        </div>
+                    </div>
+
+                    <div class="funnel-arrow">
+                        <i class="fas fa-arrow-down"></i>
+                        {% set drop1 = total - logged_in %}
+                        <span class="drop-off-label">{{ drop1 }} users dropped off ({{ "%.1f"|format((drop1/total*100) if total > 0 else 0) }}%)</span>
+                    </div>
+
+                    <div class="funnel-step" data-step="login" onclick="filterByStep('login')">
+                        <div class="step-content bg-success">
+                            <h4>{{ logged_in }}</h4>
+                            <p>Logged In</p>
+                            <small>{{ "%.1f"|format(login_rate) }}% conversion</small>
+                        </div>
+                    </div>
+
+                    <div class="funnel-arrow">
+                        <i class="fas fa-arrow-down"></i>
+                        {% set drop2 = logged_in - with_home %}
+                        <span class="drop-off-label">{{ drop2 }} users dropped off ({{ "%.1f"|format((drop2/logged_in*100) if logged_in > 0 else 0) }}%)</span>
+                    </div>
+
+                    <div class="funnel-step" data-step="home" onclick="filterByStep('home')">
+                        <div class="step-content bg-warning">
+                            <h4>{{ with_home }}</h4>
+                            <p>Joined/Created Home</p>
+                            <small>{{ "%.1f"|format(home_rate) }}% of logged in</small>
+                        </div>
+                    </div>
+
+                    <div class="funnel-arrow">
+                        <i class="fas fa-arrow-down"></i>
+                        <span class="drop-off-label">Ongoing engagement...</span>
+                    </div>
+
+                    <div class="funnel-step" data-step="tasks" onclick="filterByStep('tasks')">
+                        <div class="step-content bg-info">
+                            <h4>Active Users</h4>
+                            <p>Using Task Features</p>
+                            <small>{{ drop_off_data.task_completion[0].pct_completed_by_staff if drop_off_data.task_completion else 0 }}% completion rate</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Invite Conversion Rates</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="inviteConversionChart" style="min-height: 300px; height: 300px;"></canvas>
+
+                <div class="mt-3">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="text-center">
+                                <h5 class="text-success">Family</h5>
+                                <p class="h4">{{ drop_off_data.invite_conversion.family[0].signed_up if drop_off_data.invite_conversion.family else 0 }}/{{ drop_off_data.invite_conversion.family[0].total_invited if drop_off_data.invite_conversion.family else 0 }}</p>
+                                <small>Signup Rate: {{ "%.1f"|format((drop_off_data.invite_conversion.family[0].signed_up / drop_off_data.invite_conversion.family[0].total_invited * 100) if drop_off_data.invite_conversion.family and drop_off_data.invite_conversion.family[0].total_invited > 0 else 0) }}%</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <h5 class="text-warning">Staff</h5>
+                                <p class="h4">{{ drop_off_data.invite_conversion.staff[0].signed_up if drop_off_data.invite_conversion.staff else 0 }}/{{ drop_off_data.invite_conversion.staff[0].total_invited if drop_off_data.invite_conversion.staff else 0 }}</p>
+                                <small>Signup Rate: {{ "%.1f"|format((drop_off_data.invite_conversion.staff[0].signed_up / drop_off_data.invite_conversion.staff[0].total_invited * 100) if drop_off_data.invite_conversion.staff and drop_off_data.invite_conversion.staff[0].total_invited > 0 else 0) }}%</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Drop-off Analysis Details -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Largest Drop-off Points</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Step</th>
+                                <th>Users Lost</th>
+                                <th>% Drop-off</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="table-danger">
+                                <td>Download → Login</td>
+                                <td>{{ drop1 }}</td>
+                                <td>{{ "%.1f"|format((drop1/total*100) if total > 0 else 0) }}%</td>
+                                <td><button class="btn btn-sm btn-primary" onclick="filterByStep('download-login')">Analyze</button></td>
+                            </tr>
+                            <tr class="table-warning">
+                                <td>Login → Join Home</td>
+                                <td>{{ drop2 }}</td>
+                                <td>{{ "%.1f"|format((drop2/logged_in*100) if logged_in > 0 else 0) }}%</td>
+                                <td><button class="btn btn-sm btn-primary" onclick="filterByStep('login-home')">Analyze</button></td>
+                            </tr>
+                            <tr class="table-info">
+                                <td>Task Assignment → Completion</td>
+                                <td>{{ drop_off_data.task_completion[0].total_assigned_staff_tasks - drop_off_data.task_completion[0].total_completed_staff_tasks if drop_off_data.task_completion else 0 }}</td>
+                                <td>{{ 100 - (drop_off_data.task_completion[0].pct_completed_by_staff|float) if drop_off_data.task_completion else 0 }}%</td>
+                                <td><button class="btn btn-sm btn-primary" onclick="filterByStep('task-completion')">Analyze</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Improvement Opportunities</h3>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% if (drop1/total*100) if total > 0 else 0 > 50 %}
+                    <div class="list-group-item list-group-item-danger">
+                        <h6 class="mb-1">High Download-to-Login Drop-off</h6>
+                        <p class="mb-1">{{ "%.1f"|format((drop1/total*100) if total > 0 else 0) }}% of users don't log in after downloading</p>
+                        <small>Consider improving onboarding flow</small>
+                    </div>
+                    {% endif %}
+
+                    {% if (drop2/logged_in*100) if logged_in > 0 else 0 > 30 %}
+                    <div class="list-group-item list-group-item-warning">
+                        <h6 class="mb-1">Home Join/Create Drop-off</h6>
+                        <p class="mb-1">{{ "%.1f"|format((drop2/logged_in*100) if logged_in > 0 else 0) }}% of logged-in users don't join a home</p>
+                        <small>Simplify home creation or invitation process</small>
+                    </div>
+                    {% endif %}
+
+                    {% set task_completion_rate = drop_off_data.task_completion[0].pct_completed_by_staff|float if drop_off_data.task_completion else 0 %}
+                    {% if task_completion_rate < 70 %}
+                    <div class="list-group-item list-group-item-info">
+                        <h6 class="mb-1">Low Task Completion Rate</h6>
+                        <p class="mb-1">Only {{ task_completion_rate }}% of assigned tasks are completed</p>
+                        <small>Review task assignment and follow-up processes</small>
+                    </div>
+                    {% endif %}
+
+                    <div class="list-group-item list-group-item-success">
+                        <h6 class="mb-1">Optimize Invite Flow</h6>
+                        <p class="mb-1">Family: {{ "%.1f"|format((drop_off_data.invite_conversion.family[0].signed_up / drop_off_data.invite_conversion.family[0].total_invited * 100) if drop_off_data.invite_conversion.family and drop_off_data.invite_conversion.family[0].total_invited > 0 else 0) }}%, Staff: {{ "%.1f"|format((drop_off_data.invite_conversion.staff[0].signed_up / drop_off_data.invite_conversion.staff[0].total_invited * 100) if drop_off_data.invite_conversion.staff and drop_off_data.invite_conversion.staff[0].total_invited > 0 else 0) }}% conversion</p>
+                        <small>Focus on improving lower-performing invite type</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Invite Conversion Chart
+    var conversionCtx = document.getElementById('inviteConversionChart').getContext('2d');
+
+    var familyData = {{ drop_off_data.invite_conversion.family|tojson }};
+    var staffData = {{ drop_off_data.invite_conversion.staff|tojson }};
+
+    var familyRate = familyData.length > 0 && familyData[0].total_invited > 0 ?
+        (familyData[0].signed_up / familyData[0].total_invited * 100) : 0;
+    var staffRate = staffData.length > 0 && staffData[0].total_invited > 0 ?
+        (staffData[0].signed_up / staffData[0].total_invited * 100) : 0;
+
+    window.inviteConversionChart = new Chart(conversionCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Family Invites', 'Staff Invites'],
+            datasets: [{
+                label: 'Conversion Rate (%)',
+                data: [familyRate, staffRate],
+                backgroundColor: [
+                    'rgba(40, 167, 69, 0.8)',
+                    'rgba(255, 193, 7, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(40, 167, 69, 1)',
+                    'rgba(255, 193, 7, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Add click handlers for funnel steps
+    document.querySelectorAll('.funnel-step').forEach(function(step) {
+        step.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.05)';
+            this.style.cursor = 'pointer';
+        });
+        step.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+});
+
+// Filter by funnel step
+function filterByStep(step) {
+    console.log('Filtering by step:', step);
+
+    switch(step) {
+        case 'downloads':
+            // Show all users
+            filterByRole('all');
+            break;
+        case 'login':
+            // Focus on logged-in users
+            filterByDateRange('30days');
+            break;
+        case 'home':
+            // Focus on users with homes
+            filterByRole('Admin');
+            break;
+        case 'tasks':
+            // Focus on task-related activity
+            window.location.href = '/task-analysis' + window.location.search;
+            break;
+        case 'download-login':
+            // Analyze users who downloaded but didn't log in
+            filterByDateRange('7days');
+            break;
+        case 'login-home':
+            // Analyze users who logged in but didn't join a home
+            filterByDateRange('30days');
+            break;
+        case 'task-completion':
+            // Go to task analysis page
+            window.location.href = '/task-analysis' + window.location.search;
+            break;
+    }
+}
+</script>
+
+<style>
+.funnel-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+.funnel-step {
+    width: 80%;
+    margin: 10px 0;
+    transition: all 0.3s ease;
+}
+
+.step-content {
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.step-content h4 {
+    margin: 0;
+    font-size: 2em;
+    font-weight: bold;
+}
+
+.step-content p {
+    margin: 5px 0;
+    font-size: 1.1em;
+}
+
+.step-content small {
+    opacity: 0.9;
+}
+
+.funnel-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 5px 0;
+    color: #6c757d;
+}
+
+.funnel-arrow i {
+    font-size: 1.5em;
+    margin-bottom: 5px;
+}
+
+.drop-off-label {
+    font-size: 0.9em;
+    text-align: center;
+    background: #f8f9fa;
+    padding: 5px 10px;
+    border-radius: 15px;
+    border: 1px solid #dee2e6;
+}
+
+.funnel-step:hover {
+    transform: scale(1.05);
+    cursor: pointer;
+}
+
+.list-group-item h6 {
+    color: #495057;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+}
+</style>
+{% endblock %}

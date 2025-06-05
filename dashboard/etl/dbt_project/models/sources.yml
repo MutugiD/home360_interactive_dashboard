@@ -1,0 +1,50 @@
+version: 2
+
+sources:
+  - name: posthog
+    database: home360
+    schema: posthog
+    tables:
+      - name: events
+        description: "Raw events from PostHog"
+        columns:
+          - name: id
+            description: "Unique identifier for the event"
+          - name: event
+            description: "Name of the event"
+          - name: timestamp
+            description: "When the event occurred"
+          - name: distinct_id
+            description: "User identifier"
+          - name: properties
+            description: "Event properties as JSON"
+          - name: created_at
+            description: "When the record was created"
+          - name: updated_at
+            description: "When the record was last updated"
+
+  - name: appsflyer
+    database: home360
+    schema: appsflyer
+    tables:
+      - name: installs
+        description: "Install events from AppsFlyer"
+        columns:
+          - name: id
+            description: "Unique identifier for the install"
+          - name: install_time
+            description: "When the install occurred"
+          - name: customer_user_id
+            description: "User identifier"
+          - name: app_id
+            description: "Application identifier"
+          - name: platform
+            description: "Platform (iOS/Android)"
+          - name: country_code
+            description: "Country code"
+          - name: device_type
+            description: "Type of device"
+          - name: created_at
+            description: "When the record was created"
+          - name: updated_at
+            description: "When the record was last updated"

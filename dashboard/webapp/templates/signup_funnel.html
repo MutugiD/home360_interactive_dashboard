@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Signup Funnel & Drop-Off Analysis{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Signup Funnel & Drop-Off Analysis</h3>
+            </div>
+            <div class="card-body">
+                {% if funnel_data %}
+                    {% set downloads = funnel_data.total_users_app_downloads[0].total_users if funnel_data.total_users_app_downloads and funnel_data.total_users_app_downloads[0] else 0 %}
+                    {% set logged_in = funnel_data.total_logged_in[0].logged_in_users if funnel_data.total_logged_in and funnel_data.total_logged_in[0] else 0 %}
+                    {% set created_home = funnel_data.home_creation_vs_dropoff[0].created_home if funnel_data.home_creation_vs_dropoff and funnel_data.home_creation_vs_dropoff[0] else 0 %}
+
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center">
+                            <h4>App Downloads</h4>
+                            <p class="h2">{{ downloads }}</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <h4>Logged In</h4>
+                            <p class="h2">{{ logged_in }}</p>
+                            {% if downloads > 0 %}
+                                <p class="text-muted">({{ (logged_in / downloads * 100) | round(2) }}% of downloads)</p>
+                                <p class="text-danger">Drop-off: {{ downloads - logged_in }} ({{ ((downloads - logged_in) / downloads * 100) | round(2) }}%)</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <h4>Created a Home</h4>
+                            <p class="h2">{{ created_home }}</p>
+                            {% if logged_in > 0 %}
+                                <p class="text-muted">({{ (created_home / logged_in * 100) | round(2) }}% of logged in)</p>
+                                <p class="text-danger">Drop-off: {{ logged_in - created_home }} ({{ ((logged_in - created_home) / logged_in * 100) | round(2) }}%)</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <canvas id="signupFunnelChart" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+                {% else %}
+                    <p>Signup funnel data is not available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if funnel_data %}
+        {% set downloads = funnel_data.total_users_app_downloads[0].total_users if funnel_data.total_users_app_downloads and funnel_data.total_users_app_downloads[0] else 0 %}
+        {% set logged_in = funnel_data.total_logged_in[0].logged_in_users if funnel_data.total_logged_in and funnel_data.total_logged_in[0] else 0 %}
+        {% set created_home = funnel_data.home_creation_vs_dropoff[0].created_home if funnel_data.home_creation_vs_dropoff and funnel_data.home_creation_vs_dropoff[0] else 0 %}
+
+        var ctx = document.getElementById('signupFunnelChart').getContext('2d');
+        var signupFunnelChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['App Downloads', 'Logged In', 'Created Home'],
+                datasets: [{
+                    label: 'Users in Funnel Step',
+                    data: [{{ downloads }}, {{ logged_in }}, {{ created_home }}],
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.6)', // Blue
+                        'rgba(75, 192, 192, 0.6)', // Green
+                        'rgba(255, 206, 86, 0.6)'  // Yellow
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 206, 86, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: Math.max(1, Math.ceil(Math.max({{ downloads }}, {{ logged_in }}, {{ created_home }}) / 10)) // Dynamic step size
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y;
+                                }
+                                // Calculate conversion from previous step for tooltip
+                                if (context.dataIndex > 0) {
+                                    let previousData = context.chart.data.datasets[0].data[context.dataIndex - 1];
+                                    let currentData = context.parsed.y;
+                                    if (previousData > 0) {
+                                        let conversionRate = (currentData / previousData * 100).toFixed(2);
+                                        label += ` (${conversionRate}% from prev.)`;
+                                    }
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    {% endif %}
+});
+</script>
+{% endblock %}

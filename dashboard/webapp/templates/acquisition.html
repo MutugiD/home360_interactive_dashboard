@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Invite Tracking & Conversion{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Invite Conversion Rate for Family -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Family Invite Conversion Rate</h3>
+            </div>
+            <div class="card-body">
+                {% if acquisition_data and acquisition_data.signup_rate_invited_family and acquisition_data.signup_rate_invited_family[0] %}
+                    {% set family_invites = acquisition_data.signup_rate_invited_family[0] %}
+                    {% set family_total = family_invites.total_invited | int %}
+                    {% set family_signed_up = family_invites.signed_up | int %}
+                    {% set family_conversion_rate = (family_signed_up / family_total * 100) if family_total > 0 else 0 %}
+                    <p>Total Family Members Invited: <strong>{{ family_total }}</strong></p>
+                    <p>Family Members Signed Up: <strong>{{ family_signed_up }}</strong></p>
+                    <h4>Conversion Rate: <strong>{{ family_conversion_rate | round(2) }}%</strong></h4>
+                {% else %}
+                    <p>Family invite conversion data not available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Invite Conversion Rate for Staff -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Staff Invite Conversion Rate</h3>
+            </div>
+            <div class="card-body">
+                {% if acquisition_data and acquisition_data.signup_rate_invited_staff and acquisition_data.signup_rate_invited_staff[0] %}
+                    {% set staff_invites = acquisition_data.signup_rate_invited_staff[0] %}
+                    {% set staff_total = staff_invites.total_invited | int %}
+                    {% set staff_signed_up = staff_invites.signed_up | int %}
+                    {% set staff_conversion_rate = (staff_signed_up / staff_total * 100) if staff_total > 0 else 0 %}
+                    <p>Total Staff Members Invited: <strong>{{ staff_total }}</strong></p>
+                    <p>Staff Members Signed Up: <strong>{{ staff_signed_up }}</strong></p>
+                    <h4>Conversion Rate: <strong>{{ staff_conversion_rate | round(2) }}%</strong></h4>
+                {% else %}
+                    <p>Staff invite conversion data not available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Recent Invites & Time to Signup</h3>
+            </div>
+            <div class="card-body">
+                {% if acquisition_data and acquisition_data.invite_to_signup_times %}
+                    {% set invites = acquisition_data.invite_to_signup_times %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Invited User ID</th>
+                                    <th>Invite Time</th>
+                                    <th>Signup Time</th>
+                                    <th>Hours to Signup</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invite in invites[:20] %} {# Displaying up to 20 recent invites #}
+                                <tr>
+                                    <td>{{ invite.invited_user_id }}</td>
+                                    <td>{{ invite.invite_time.strftime('%Y-%m-%d %H:%M:%S') if invite.invite_time else 'N/A' }}</td>
+                                    <td>{{ invite.signup_time.strftime('%Y-%m-%d %H:%M:%S') if invite.signup_time else 'N/A' }}</td>
+                                    <td>{{ invite.hours_to_signup | round(2) if invite.hours_to_signup is not none else 'N/A' }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No invite data available.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if invites %}
+                        {% set total_hours = namespace(value=0) %}
+                        {% set count = namespace(value=0) %}
+                        {% for invite in invites %}
+                            {% if invite.hours_to_signup is not none %}
+                                {% set total_hours.value = total_hours.value + invite.hours_to_signup %}
+                                {% set count.value = count.value + 1 %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if count.value > 0 %}
+                            <p class="mt-3"><strong>Average Time to Signup:</strong> {{ (total_hours.value / count.value) | round(2) }} hours</p>
+                        {% endif %}
+                    {% endif %}
+                {% else %}
+                    <p>Invite time data is not available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// No custom JS needed for this page with the current design
+// Charts have been removed as they were hardcoded and irrelevant to invite data
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Invite Tracking & Conversion page loaded.");
+});
+</script>
+{% endblock %}

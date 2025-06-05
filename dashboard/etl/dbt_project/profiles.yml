@@ -1,0 +1,26 @@
+home360:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: 52.141.50.106
+      user: home360_reader
+      password: home360pass123
+      port: 5432
+      dbname: home360-dev
+      schema: analytics
+      threads: 4
+      keepalives_idle: 0
+      connect_timeout: 10
+
+    prod:
+      type: postgres
+      host: "{{ env_var('DBT_HOST') }}"
+      user: "{{ env_var('DBT_USER') }}"
+      password: "{{ env_var('DBT_PASSWORD') }}"
+      port: 5432
+      dbname: home360-dev
+      schema: analytics
+      threads: 4
+      keepalives_idle: 0
+      connect_timeout: 10

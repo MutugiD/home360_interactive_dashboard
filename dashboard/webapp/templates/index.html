@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Home360 Analytics{% endblock %}
+
+{% block content %}
+<!-- Info boxes -->
+<div class="row">
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="info-box">
+            <span class="info-box-icon bg-info elevation-1"><i class="fas fa-users"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">Total Users</span>
+                <span class="info-box-number" data-metric="total_users">{{ metrics.total_users|default(0)|int }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="info-box">
+            <span class="info-box-icon bg-success elevation-1"><i class="fas fa-user-plus"></i></span>
+            <div class="info-box-content">
+                <span class="info-box-text">New Users (30d)</span>
+                <span class="info-box-number" data-metric="new_users">{{ metrics.new_users|default(0)|int }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">User Growth Trend (Click points to filter by date)</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="growthTrendChart" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">User Distribution by Role (Click to filter)</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="userDistributionChart" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Recent Activity (Clickable rows for detailed drilldown)</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Event</th>
+                                <th>Users</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in growth_trend %}
+                            <tr class="clickable-row" data-date="{{ activity.period.strftime('%Y-%m-%d') if activity.period else '' }}">
+                                <td>{{ activity.period.strftime('%Y-%m-%d') if activity.period else 'N/A' }}</td>
+                                <td>Daily Active Users</td>
+                                <td>{{ activity.dau|int }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="filterByDateRange('custom', '{{ activity.period.strftime('%Y-%m-%d') if activity.period else '' }}', '{{ activity.period.strftime('%Y-%m-%d') if activity.period else '' }}')">
+                                        <i class="fas fa-filter"></i> Filter by Date
+                                    </button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center">No recent activity data available.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Filter Cards -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Quick Filters</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white cursor-pointer" onclick="filterByRole('Admin')">
+                            <div class="card-body text-center">
+                                <i class="fas fa-crown fa-2x mb-2"></i>
+                                <h5>Admins Only</h5>
+                                <p class="small">View admin users data</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white cursor-pointer" onclick="filterByRole('Family')">
+                            <div class="card-body text-center">
+                                <i class="fas fa-home fa-2x mb-2"></i>
+                                <h5>Family Members</h5>
+                                <p class="small">View family members data</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white cursor-pointer" onclick="filterByRole('Staff')">
+                            <div class="card-body text-center">
+                                <i class="fas fa-user-tie fa-2x mb-2"></i>
+                                <h5>Staff Members</h5>
+                                <p class="small">View staff members data</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white cursor-pointer" onclick="filterByDateRange('7days')">
+                            <div class="card-body text-center">
+                                <i class="fas fa-calendar-week fa-2x mb-2"></i>
+                                <h5>Last 7 Days</h5>
+                                <p class="small">View recent activity</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // User Growth Chart
+    var growthCtx = document.getElementById('growthTrendChart').getContext('2d');
+    var growthData = {{ growth_trend|tojson }};
+
+    // Prepare labels and data for the chart
+    var growthLabels = growthData.map(function(item) { return new Date(item.period).toLocaleDateString(); }).reverse();
+    var dauData = growthData.map(function(item) { return item.dau; }).reverse();
+
+    window.growthTrendChart = new Chart(growthCtx, {
+        type: 'line',
+        data: {
+            labels: growthLabels,
+            datasets: [{
+                label: 'Daily Active Users',
+                data: dauData,
+                borderColor: 'rgba(60, 141, 188, 1)',
+                backgroundColor: 'rgba(60, 141, 188, 0.1)',
+                tension: 0.1,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        afterLabel: function(context) {
+                            return 'Click to filter by this date';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // User Distribution Chart - Get actual user distribution data
+    fetch('/api/user-distribution' + window.location.search)
+        .then(response => response.json())
+        .then(data => {
+            var distributionCtx = document.getElementById('userDistributionChart').getContext('2d');
+
+            window.userDistributionChart = new Chart(distributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.map(d => d.role || 'Unknown'),
+                    datasets: [{
+                        data: data.map(d => d.count || 0),
+                        backgroundColor: [
+                            'rgba(60, 141, 188, 0.8)',
+                            'rgba(40, 167, 69, 0.8)',
+                            'rgba(255, 193, 7, 0.8)',
+                            'rgba(220, 53, 69, 0.8)',
+                            'rgba(108, 117, 125, 0.8)'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    return 'Click to filter by ' + context.label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading user distribution:', error);
+            // Fallback empty chart
+            var distributionCtx = document.getElementById('userDistributionChart').getContext('2d');
+            window.userDistributionChart = new Chart(distributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['No Data'],
+                    datasets: [{
+                        data: [1],
+                        backgroundColor: ['rgba(108, 117, 125, 0.8)']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        });
+
+    // Add hover effects to clickable elements
+    document.querySelectorAll('.cursor-pointer').forEach(function(element) {
+        element.style.cursor = 'pointer';
+        element.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+        });
+        element.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '';
+        });
+    });
+
+    // Add hover effects to table rows
+    document.querySelectorAll('.clickable-row').forEach(function(row) {
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', function() {
+            const date = this.getAttribute('data-date');
+            if (date) {
+                filterByDateRange('custom', date, date);
+            }
+        });
+    });
+});
+</script>
+
+<style>
+.cursor-pointer {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clickable-row:hover {
+    background-color: #f8f9fa !important;
+    cursor: pointer;
+}
+
+.card.cursor-pointer:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}

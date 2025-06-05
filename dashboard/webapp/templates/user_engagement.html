@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}User Engagement{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Daily Active Users</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="dauChart" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Session Duration</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="sessionDurationChart" style="min-height: 300px; height: 300px; max-height: 300px; max-width: 100%;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">User Retention</h3>
+            </div>
+            <div class="card-body">
+                <canvas id="retentionChart" style="min-height: 400px; height: 400px; max-height: 400px; max-width: 100%;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // DAU Chart
+    var dauCtx = document.getElementById('dauChart').getContext('2d');
+    var dauChart = new Chart(dauCtx, {
+        type: 'line',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Daily Active Users',
+                data: [1200, 1900, 1500, 1800, 2100, 2400, 2000],
+                borderColor: 'rgba(75, 192, 192, 1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Session Duration Chart
+    var durationCtx = document.getElementById('sessionDurationChart').getContext('2d');
+    var durationChart = new Chart(durationCtx, {
+        type: 'bar',
+        data: {
+            labels: ['< 1 min', '1-5 min', '5-15 min', '15-30 min', '> 30 min'],
+            datasets: [{
+                label: 'Number of Sessions',
+                data: [500, 1200, 800, 400, 200],
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Retention Chart
+    var retentionCtx = document.getElementById('retentionChart').getContext('2d');
+    var retentionChart = new Chart(retentionCtx, {
+        type: 'line',
+        data: {
+            labels: ['Day 1', 'Day 7', 'Day 14', 'Day 30', 'Day 60', 'Day 90'],
+            datasets: [{
+                label: 'Retention Rate (%)',
+                data: [100, 45, 30, 20, 15, 10],
+                borderColor: 'rgba(255, 99, 132, 1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

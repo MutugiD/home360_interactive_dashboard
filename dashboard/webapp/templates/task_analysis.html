@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Task Analysis - Home360 Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page-specific content for Task Analysis -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Task Creation & Completion Metrics</h3>
+                </div>
+                <div class="card-body">
+                    {% if task_data %}
+                        <h4>Task Creators by Role</h4>
+                        <pre>{{ task_data.creators_by_role | tojson(indent=4) }}</pre>
+
+                        <h4>Tasks Per Home / Per User</h4>
+                        <p><strong>Per Home:</strong></p>
+                        <pre>{{ task_data.tasks_per_home_user[0] | tojson(indent=4) if task_data.tasks_per_home_user and task_data.tasks_per_home_user[0] else "No data" }}</pre>
+                        <p><strong>Per User:</strong></p>
+                        <pre>{{ task_data.tasks_per_home_user[1] | tojson(indent=4) if task_data.tasks_per_home_user and task_data.tasks_per_home_user[1] else "No data" }}</pre>
+
+                        <h4>Daily Staff Task Checks</h4>
+                        <pre>{{ task_data.daily_staff_checks | tojson(indent=4) }}</pre>
+
+                        <h4>Task Completion Rate by Staff</h4>
+                        <pre>{{ task_data.completion_rate_staff | tojson(indent=4) }}</pre>
+
+                        <h4>Average Task Completion Delay</h4>
+                        <pre>{{ task_data.avg_completion_delay | tojson(indent=4) }}</pre>
+                    {% else %}
+                        <p>No task analysis data available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

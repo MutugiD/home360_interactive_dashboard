@@ -1,0 +1,14 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "52.141.50.106",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "home360-dev",
+            "database": "home360-dev",
+            "username": "home360_reader",
+            "password": "home360pass123"
+        }
+    ]
+}
